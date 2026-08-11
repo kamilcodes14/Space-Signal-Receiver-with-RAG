@@ -1,0 +1,18 @@
+numpy
+matplotlib
+flask
+
+# Uncomment when your RTL-SDR dongle arrives:
+# pyrtlsdr
+
+# Uncomment when you want to work with real Breakthrough Listen telescope files:
+# blimpy
+# turbo_seti
+
+# Research assistant widget (RAG over data/docs + data/logs) - optional.
+# Requires ANTHROPIC_API_KEY to be set. See RAG_SETUP.md.
+faiss-cpu
+sentence-transformers
+pypdf
+python-docx
+anthropic

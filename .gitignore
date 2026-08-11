@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+outputs/*.png
+.vercel/
+.env
+
+# RAG research assistant - generated index and your own dropped-in content
+src/rag_index/
+src/data/docs/*
+src/data/logs/*
+!src/data/docs/.gitkeep
+!src/data/logs/.gitkeep
