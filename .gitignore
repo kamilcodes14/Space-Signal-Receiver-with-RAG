@@ -11,3 +11,11 @@ src/data/docs/*
 src/data/logs/*
 !src/data/docs/.gitkeep
 !src/data/logs/.gitkeep
+
+# Local data and execution artifacts
+.venv/
+.pytest_cache/
+data/*.h5
+data/*.fil
+data/*.part
+outputs/*.json

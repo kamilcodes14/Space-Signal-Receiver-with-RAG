@@ -1,0 +1,7 @@
+-r requirements-core.txt
+blimpy==2.1.4
+h5py>=3.10,<4
+pytest>=8,<10
+
+# blimpy 2.1.4 imports pkg_resources, removed in setuptools 81.
+setuptools>=68,<81

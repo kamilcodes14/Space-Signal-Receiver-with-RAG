@@ -1,52 +1,45 @@
-"""Waterfall (spectrogram) plotting -- the standard view radio astronomers
-use: frequency on x, time on y, signal power as color."""
-
+"""Waterfall with channel-center coordinates and labeled relative power."""
 import io
+from pathlib import Path
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
 def _draw_waterfall(freqs, times, power, candidates=None):
     fig, ax = plt.subplots(figsize=(10, 6))
-    power_db = 10 * np.log10(power - power.min() + 1e-6)
-
-    extent = [freqs.min(), freqs.max(), times.max(), times.min()]
-    im = ax.imshow(power_db, aspect="auto", extent=extent, cmap="viridis")
-    ax.set_xlabel("Frequency (MHz)")
-    ax.set_ylabel("Time (s)")
-    ax.set_title("Waterfall — captured signal")
-    fig.colorbar(im, ax=ax, label="Power (dB, relative)")
-
-    if candidates:
-        n_freq = power.shape[1]
-        freq_per_bin = (freqs.max() - freqs.min()) / n_freq
-        for c in candidates:
-            f0 = freqs.min() + c["start_freq_bin"] * freq_per_bin
-            f1 = f0 + c["drift_rate_bins_per_step"] * freq_per_bin * (len(times) - 1)
-            ax.plot([f0, f1], [times.min(), times.max()], "r--", linewidth=1.5, alpha=0.8)
-            ax.annotate(f"SNR {c['snr']}", (f0, times.min()), color="red", fontsize=8)
-
+    reference = max(float(np.median(power)), np.finfo(float).tiny)
+    power_db = 10 * np.log10(np.maximum(power / reference, np.finfo(float).tiny))
+    # Relative Hz avoids losing narrowband structure in a large MHz offset.
+    offset_hz = (np.asarray(freqs) - freqs[0]) * 1e6
+    im = ax.pcolormesh(offset_hz, times, power_db, shading='nearest', cmap='viridis')
+    ax.invert_yaxis()
+    ax.set_xlabel(f'Frequency offset from {freqs[0]:.9f} MHz (Hz)')
+    ax.set_ylabel('Time (s)')
+    ax.set_title('Waterfall - captured power and candidate tracks')
+    fig.colorbar(im, ax=ax, label='Power / median power (dB)')
+    df = float(np.median(np.diff(offset_hz)))
+    for c in (candidates or [])[:5]:
+        bins = c['start_freq_bin'] + c['drift_rate_bins_per_step'] * np.arange(len(times))
+        valid = (bins >= 0) & (bins <= len(freqs) - 1)
+        ax.plot(bins[valid] * df, np.asarray(times)[valid], 'r--', lw=1.3, alpha=.8)
     fig.tight_layout()
     return fig
 
 
-def plot_waterfall(freqs, times, power, candidates=None, out_path="outputs/waterfall.png"):
-    """Saves to disk. Used by the CLI (app.py) for local runs."""
+def plot_waterfall(freqs, times, power, candidates=None, out_path='outputs/waterfall.png'):
+    path = Path(out_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     fig = _draw_waterfall(freqs, times, power, candidates)
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(path, dpi=150)
     plt.close(fig)
-    return out_path
+    return str(path)
 
 
 def plot_waterfall_bytes(freqs, times, power, candidates=None):
-    """Returns raw PNG bytes, no disk write. Used by app_web.py so it works
-    on serverless platforms (Vercel) where the filesystem isn't writable/
-    persistent between requests."""
     fig = _draw_waterfall(freqs, times, power, candidates)
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=150)
+    fig.savefig(buf, format='png', dpi=150)
     plt.close(fig)
-    buf.seek(0)
-    return buf.read()
+    return buf.getvalue()

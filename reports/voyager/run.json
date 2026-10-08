@@ -1,0 +1,435 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-10-07T19:51:29.847901+00:00",
+  "source": "file",
+  "parameters": {
+    "source": "file",
+    "freq_mhz": 137.1,
+    "seed": 42,
+    "no_signal": false,
+    "strength": 3.0,
+    "drift_hz_s": 0.4,
+    "file": "data/Voyager1.single_coarse.fine_res.h5",
+    "f_start": 8419.296,
+    "f_stop": 8419.298,
+    "max_time_steps": 256,
+    "threshold": 6.0,
+    "max_drift_bins": 4.0,
+    "out": "reports/voyager/waterfall.png",
+    "log": "reports/voyager/run.json"
+  },
+  "shape": [
+    16,
+    716
+  ],
+  "frequency_start_mhz": 8419.296002481133,
+  "frequency_end_mhz": 8419.298000168055,
+  "channel_width_hz": 2.7939677238464355,
+  "integration_spacing_s": 18.253611008,
+  "truth": null,
+  "candidates": [
+    {
+      "drift_rate_bins_per_step": -2.466666666666667,
+      "start_freq_bin": 367,
+      "snr": 71.45051857342355,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297027867287,
+      "drift_rate_hz_per_s": -0.37755746241848154
+    },
+    {
+      "drift_rate_bins_per_step": -2.1333333333333333,
+      "start_freq_bin": 366,
+      "snr": 35.73205522143574,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.29702507332,
+      "drift_rate_hz_per_s": -0.32653618371328136
+    },
+    {
+      "drift_rate_bins_per_step": -2.8,
+      "start_freq_bin": 371,
+      "snr": 35.44726706977053,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297039043158,
+      "drift_rate_hz_per_s": -0.4285787411236818
+    },
+    {
+      "drift_rate_bins_per_step": -2.8666666666666667,
+      "start_freq_bin": 368,
+      "snr": 28.02031571302777,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297030661255,
+      "drift_rate_hz_per_s": -0.4387829968647218
+    },
+    {
+      "drift_rate_bins_per_step": -1.8666666666666667,
+      "start_freq_bin": 362,
+      "snr": 23.671188614136984,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297013897449,
+      "drift_rate_hz_per_s": -0.2857191607491212
+    },
+    {
+      "drift_rate_bins_per_step": -3.1333333333333333,
+      "start_freq_bin": 372,
+      "snr": 22.209897005558627,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297041837126,
+      "drift_rate_hz_per_s": -0.47960001982888195
+    },
+    {
+      "drift_rate_bins_per_step": -3.0666666666666664,
+      "start_freq_bin": 375,
+      "snr": 21.846912600783437,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.29705021903,
+      "drift_rate_hz_per_s": -0.4693957640878419
+    },
+    {
+      "drift_rate_bins_per_step": -2.2,
+      "start_freq_bin": 363,
+      "snr": 21.56602112983667,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297016691417,
+      "drift_rate_hz_per_s": -0.3367404394543214
+    },
+    {
+      "drift_rate_bins_per_step": -1.7333333333333334,
+      "start_freq_bin": 364,
+      "snr": 17.76746145321337,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297019485384,
+      "drift_rate_hz_per_s": -0.26531064926704107
+    },
+    {
+      "drift_rate_bins_per_step": -3.2666666666666666,
+      "start_freq_bin": 370,
+      "snr": 17.741914236529627,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.29703624919,
+      "drift_rate_hz_per_s": -0.500008531310962
+    },
+    {
+      "drift_rate_bins_per_step": -1.7333333333333334,
+      "start_freq_bin": 358,
+      "snr": 14.60981224137833,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297002721578,
+      "drift_rate_hz_per_s": -0.26531064926704107
+    },
+    {
+      "drift_rate_bins_per_step": -1.4,
+      "start_freq_bin": 359,
+      "snr": 13.91057816929471,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297005515546,
+      "drift_rate_hz_per_s": -0.2142893705618409
+    },
+    {
+      "drift_rate_bins_per_step": -1.6,
+      "start_freq_bin": 366,
+      "snr": 13.909238935681481,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.29702507332,
+      "drift_rate_hz_per_s": -0.244902137784961
+    },
+    {
+      "drift_rate_bins_per_step": -3.4,
+      "start_freq_bin": 376,
+      "snr": 13.799249073762875,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297053012997,
+      "drift_rate_hz_per_s": -0.5204170427930421
+    },
+    {
+      "drift_rate_bins_per_step": -3.3333333333333335,
+      "start_freq_bin": 379,
+      "snr": 13.217386791321411,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.2970613949,
+      "drift_rate_hz_per_s": -0.5102127870520021
+    },
+    {
+      "drift_rate_bins_per_step": -3.533333333333333,
+      "start_freq_bin": 374,
+      "snr": 13.094710667526652,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297047425061,
+      "drift_rate_hz_per_s": -0.5408255542751222
+    },
+    {
+      "drift_rate_bins_per_step": -3.533333333333333,
+      "start_freq_bin": 370,
+      "snr": 12.78333994861879,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.29703624919,
+      "drift_rate_hz_per_s": -0.5408255542751222
+    },
+    {
+      "drift_rate_bins_per_step": -3.933333333333333,
+      "start_freq_bin": 379,
+      "snr": 12.4724463073373,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.2970613949,
+      "drift_rate_hz_per_s": -0.6020510887213625
+    },
+    {
+      "drift_rate_bins_per_step": -1.4,
+      "start_freq_bin": 354,
+      "snr": 12.427182116492359,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296991545707,
+      "drift_rate_hz_per_s": -0.2142893705618409
+    },
+    {
+      "drift_rate_bins_per_step": -3.7333333333333334,
+      "start_freq_bin": 380,
+      "snr": 12.235762857367305,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297064188868,
+      "drift_rate_hz_per_s": -0.5714383214982424
+    },
+    {
+      "drift_rate_bins_per_step": -1.1333333333333333,
+      "start_freq_bin": 362,
+      "snr": 12.128451699258223,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297013897449,
+      "drift_rate_hz_per_s": -0.1734723475976807
+    },
+    {
+      "drift_rate_bins_per_step": -1.3333333333333335,
+      "start_freq_bin": 366,
+      "snr": 11.915869880387215,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.29702507332,
+      "drift_rate_hz_per_s": -0.20408511482080086
+    },
+    {
+      "drift_rate_bins_per_step": -3.7333333333333334,
+      "start_freq_bin": 385,
+      "snr": 11.619600542091904,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297078158706,
+      "drift_rate_hz_per_s": -0.5714383214982424
+    },
+    {
+      "drift_rate_bins_per_step": -3.7333333333333334,
+      "start_freq_bin": 368,
+      "snr": 11.248727890300584,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297030661255,
+      "drift_rate_hz_per_s": -0.5714383214982424
+    },
+    {
+      "drift_rate_bins_per_step": -1.2666666666666666,
+      "start_freq_bin": 350,
+      "snr": 10.953876930538138,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296980369836,
+      "drift_rate_hz_per_s": -0.1938808590797608
+    },
+    {
+      "drift_rate_bins_per_step": -1.0666666666666669,
+      "start_freq_bin": 358,
+      "snr": 9.834911215084224,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297002721578,
+      "drift_rate_hz_per_s": -0.16326809185664068
+    },
+    {
+      "drift_rate_bins_per_step": -0.7999999999999998,
+      "start_freq_bin": 358,
+      "snr": 9.628787624809933,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297002721578,
+      "drift_rate_hz_per_s": -0.12245106889248047
+    },
+    {
+      "drift_rate_bins_per_step": -1.2000000000000002,
+      "start_freq_bin": 355,
+      "snr": 9.4767415752497,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296994339675,
+      "drift_rate_hz_per_s": -0.18367660333872077
+    },
+    {
+      "drift_rate_bins_per_step": -0.2666666666666666,
+      "start_freq_bin": 355,
+      "snr": 9.32309802223586,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296994339675,
+      "drift_rate_hz_per_s": -0.040817022964160156
+    },
+    {
+      "drift_rate_bins_per_step": -0.6000000000000001,
+      "start_freq_bin": 349,
+      "snr": 9.235253281055346,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296977575868,
+      "drift_rate_hz_per_s": -0.09183830166936038
+    },
+    {
+      "drift_rate_bins_per_step": -0.7333333333333334,
+      "start_freq_bin": 354,
+      "snr": 9.200845082446426,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296991545707,
+      "drift_rate_hz_per_s": -0.11224681315144046
+    },
+    {
+      "drift_rate_bins_per_step": -0.7333333333333334,
+      "start_freq_bin": 361,
+      "snr": 9.100750117741342,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297011103481,
+      "drift_rate_hz_per_s": -0.11224681315144046
+    },
+    {
+      "drift_rate_bins_per_step": -0.06666666666666687,
+      "start_freq_bin": 349,
+      "snr": 9.058388674863638,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296977575868,
+      "drift_rate_hz_per_s": -0.010204255741040074
+    },
+    {
+      "drift_rate_bins_per_step": -4.0,
+      "start_freq_bin": 374,
+      "snr": 9.039598428092445,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297047425061,
+      "drift_rate_hz_per_s": -0.6122553444624025
+    },
+    {
+      "drift_rate_bins_per_step": -0.3999999999999999,
+      "start_freq_bin": 360,
+      "snr": 8.922005464833695,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297008309513,
+      "drift_rate_hz_per_s": -0.06122553444624024
+    },
+    {
+      "drift_rate_bins_per_step": -0.8666666666666667,
+      "start_freq_bin": 365,
+      "snr": 8.89539160553833,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297022279352,
+      "drift_rate_hz_per_s": -0.13265532463352053
+    },
+    {
+      "drift_rate_bins_per_step": -4.0,
+      "start_freq_bin": 368,
+      "snr": 8.825829514287918,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297030661255,
+      "drift_rate_hz_per_s": -0.6122553444624025
+    },
+    {
+      "drift_rate_bins_per_step": -0.3999999999999999,
+      "start_freq_bin": 354,
+      "snr": 8.695357852492096,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296991545707,
+      "drift_rate_hz_per_s": -0.06122553444624024
+    },
+    {
+      "drift_rate_bins_per_step": -0.4666666666666668,
+      "start_freq_bin": 364,
+      "snr": 8.658649688008135,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297019485384,
+      "drift_rate_hz_per_s": -0.07142979018728032
+    },
+    {
+      "drift_rate_bins_per_step": -0.2666666666666666,
+      "start_freq_bin": 364,
+      "snr": 8.622250311733943,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297019485384,
+      "drift_rate_hz_per_s": -0.040817022964160156
+    },
+    {
+      "drift_rate_bins_per_step": -1.0,
+      "start_freq_bin": 350,
+      "snr": 8.542229388116247,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296980369836,
+      "drift_rate_hz_per_s": -0.15306383611560062
+    },
+    {
+      "drift_rate_bins_per_step": -0.3333333333333335,
+      "start_freq_bin": 345,
+      "snr": 8.468100612921766,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296966399997,
+      "drift_rate_hz_per_s": -0.051021278705200235
+    },
+    {
+      "drift_rate_bins_per_step": -3.933333333333333,
+      "start_freq_bin": 384,
+      "snr": 8.303715495011872,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297075364739,
+      "drift_rate_hz_per_s": -0.6020510887213625
+    },
+    {
+      "drift_rate_bins_per_step": -4.0,
+      "start_freq_bin": 389,
+      "snr": 8.237636679241058,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297089334577,
+      "drift_rate_hz_per_s": -0.6122553444624025
+    },
+    {
+      "drift_rate_bins_per_step": -0.6666666666666665,
+      "start_freq_bin": 346,
+      "snr": 8.215247420557363,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296969193965,
+      "drift_rate_hz_per_s": -0.10204255741040039
+    },
+    {
+      "drift_rate_bins_per_step": -0.8666666666666667,
+      "start_freq_bin": 344,
+      "snr": 8.056964063661743,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.29696360603,
+      "drift_rate_hz_per_s": -0.13265532463352053
+    },
+    {
+      "drift_rate_bins_per_step": -0.1333333333333333,
+      "start_freq_bin": 340,
+      "snr": 7.954701398784298,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296952430159,
+      "drift_rate_hz_per_s": -0.020408511482080078
+    },
+    {
+      "drift_rate_bins_per_step": -0.3999999999999999,
+      "start_freq_bin": 350,
+      "snr": 7.769741661576687,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296980369836,
+      "drift_rate_hz_per_s": -0.06122553444624024
+    },
+    {
+      "drift_rate_bins_per_step": -0.5333333333333332,
+      "start_freq_bin": 339,
+      "snr": 7.677195951907314,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.296949636191,
+      "drift_rate_hz_per_s": -0.08163404592832031
+    },
+    {
+      "drift_rate_bins_per_step": -2.0,
+      "start_freq_bin": 368,
+      "snr": 6.661718038820387,
+      "n_integrations": 16,
+      "frequency_mhz": 8419.297030661255,
+      "drift_rate_hz_per_s": -0.30612767223120124
+    }
+  ],
+  "score_definition": "sum of per-row mean-subtracted power / sqrt(sum of per-row variances)",
+  "limitations": "Candidate score is not a calibrated false-alarm probability. A track is not proof of celestial origin.",
+  "input_sha256": "c9a9a54f4140e3754ffb2455fae4eeb2eb70c8207123116ee953e4fce15c36ac"
+}

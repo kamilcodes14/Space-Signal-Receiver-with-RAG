@@ -1,0 +1,39 @@
+{
+  "dataset_url": "http://blpd0.ssl.berkeley.edu/Voyager_data/Voyager1.single_coarse.fine_res.h5",
+  "input_sha256": "c9a9a54f4140e3754ffb2455fae4eeb2eb70c8207123116ee953e4fce15c36ac",
+  "tutorial": "https://github.com/UCBerkeleySETI/blimpy/blob/master/examples/voyager.ipynb",
+  "shape": [
+    16,
+    716
+  ],
+  "frequency_selection_mhz": [
+    8419.296,
+    8419.298
+  ],
+  "channel_width_hz": 2.7939677238464355,
+  "integration_spacing_s": 18.253611008,
+  "first_to_last_integration_s": 273.80416512,
+  "threshold": 6,
+  "max_drift_bins_per_step": 4,
+  "candidate_track_count": 50,
+  "top_candidate": {
+    "drift_rate_bins_per_step": -2.466666666666667,
+    "start_freq_bin": 367,
+    "snr": 71.45051857342355,
+    "n_integrations": 16,
+    "frequency_mhz": 8419.297027867287,
+    "drift_rate_hz_per_s": -0.37755746241848154
+  },
+  "stationary_baseline_top": null,
+  "ridge_fit_drift_hz_s": -0.374106022976657,
+  "ridge_residual_rms_hz": 1.1452361091563406,
+  "drift_agreement_tolerance_hz_s": 0.020408511482080085,
+  "consistency_check_passed": true,
+  "limitations": [
+    "Known, preselected bright spacecraft signal; not a blind survey or discovery.",
+    "Ridge fit uses the same data and is not independent ground truth.",
+    "Candidate count includes overlapping tracks through one carrier, not distinct sources.",
+    "False-positive rate on real telescope backgrounds is not measured by this example.",
+    "No barycentric correction, calibrated flux, uncertainty model, or RFI rejection."
+  ]
+}
