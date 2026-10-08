@@ -1,120 +1,127 @@
+"""Spectrogram sources; frequency centers in MHz, sample centers in seconds.
+
+All sources return (freqs_mhz, times_s, power[time, frequency]). Hardware
+and telescope adapters do not imply that an observation is astronomical.
 """
-Signal sources for the receiver pipeline.
-
-Right now (no hardware yet): SimulatedSource stands in for a real dish.
-It generates a spectrogram (time x frequency power array) with realistic
-noise plus an injected narrowband signal that drifts in frequency over
-time -- the same basic shape as real telescope data and the same shape
-you'll get from an RTL-SDR once it arrives.
-
-In ~9-10 days, once the RTL-SDR dongle shows up: implement RTLSDRSource
-below (stubbed out) and swap it in app.py. No other code changes needed --
-detector.py and visualizer.py don't care where the data came from.
-
-Later, to work with real Breakthrough Listen telescope data: implement
-FileSource using the `blimpy` library (pip install blimpy) to load .fil
-or .h5 files downloaded from https://breakthroughinitiatives.org/opendatasearch
-"""
-
+from pathlib import Path
 import numpy as np
 
 
 class SimulatedSource:
-    """Generates synthetic telescope-like data: noise + an injected
-    narrowband signal that drifts in frequency (like a real transmitter
-    would, due to Doppler shift from relative motion)."""
+    """Independent exponential power noise plus a nearest-bin linear track.
 
-    def __init__(self, n_freq_bins=2048, n_time_steps=256,
-                 freq_range_mhz=(1400.0, 1420.0), seed=None,
+    Default resolution is 1 Hz/bin with 1 s integrations, so the default
+    0.4 Hz/s signal traverses about 51 bins. No sub-bin leakage is modeled.
+    """
+    def __init__(self, n_freq_bins=512, n_time_steps=128,
+                 freq_range_mhz=(1420.0, 1420.000512), seed=None,
                  inject_signal=True, drift_rate_hz_per_s=0.4,
-                 signal_strength=12.0):
-        self.n_freq_bins = n_freq_bins
-        self.n_time_steps = n_time_steps
+                 signal_strength=3.0, time_step_s=1.0, start_bin=None):
+        if n_freq_bins < 2 or n_time_steps < 2:
+            raise ValueError('At least two frequency bins and time steps are required.')
+        if not np.isfinite(time_step_s) or time_step_s <= 0:
+            raise ValueError('time_step_s must be positive and finite.')
+        if not np.all(np.isfinite(freq_range_mhz)) or freq_range_mhz[1] <= freq_range_mhz[0]:
+            raise ValueError('Frequency bounds must be finite and increasing.')
+        if not np.isfinite(signal_strength) or signal_strength < 0 or not np.isfinite(drift_rate_hz_per_s):
+            raise ValueError('Signal strength must be nonnegative and drift finite.')
+        if start_bin is not None and not 0 <= start_bin < n_freq_bins:
+            raise ValueError('start_bin must be in band.')
+        self.n_freq_bins, self.n_time_steps = n_freq_bins, n_time_steps
         self.freq_min, self.freq_max = freq_range_mhz
         self.rng = np.random.default_rng(seed)
-        self.inject_signal = inject_signal
-        self.drift_rate_hz_per_s = drift_rate_hz_per_s
-        self.signal_strength = signal_strength
+        self.inject_signal, self.drift_rate_hz_per_s = inject_signal, drift_rate_hz_per_s
+        self.signal_strength, self.time_step_s = signal_strength, time_step_s
+        self.start_bin = start_bin
+        self.truth = None
 
     def capture(self):
-        """Returns (freqs_mhz, times_s, power) -- power has shape
-        (n_time_steps, n_freq_bins), same layout real filterbank data uses."""
-        freqs = np.linspace(self.freq_min, self.freq_max, self.n_freq_bins)
-        times = np.arange(self.n_time_steps)  # seconds, 1s integrations
-
-        # background noise floor (chi-squared-like, as real radio noise is)
+        freqs = np.linspace(self.freq_min, self.freq_max, self.n_freq_bins, endpoint=False)
+        times = np.arange(self.n_time_steps) * self.time_step_s
         power = self.rng.chisquare(df=2, size=(self.n_time_steps, self.n_freq_bins))
-
+        self.truth = None
         if self.inject_signal:
-            bandwidth_mhz = self.freq_max - self.freq_min
-            hz_per_bin = (bandwidth_mhz * 1e6) / self.n_freq_bins
-            start_bin = self.rng.integers(int(self.n_freq_bins * 0.2),
-                                           int(self.n_freq_bins * 0.8))
-            for t in times:
-                drift_bins = (self.drift_rate_hz_per_s * t) / hz_per_bin
-                bin_idx = int(round(start_bin + drift_bins))
-                if 0 <= bin_idx < self.n_freq_bins:
-                    power[t, bin_idx] += self.signal_strength
-
+            df_hz = (freqs[1] - freqs[0]) * 1e6
+            start = self.start_bin if self.start_bin is not None else self.n_freq_bins // 2
+            drift = self.drift_rate_hz_per_s * self.time_step_s / df_hz
+            bins = np.rint(start + drift * np.arange(self.n_time_steps)).astype(int)
+            valid = (bins >= 0) & (bins < self.n_freq_bins)
+            power[np.arange(self.n_time_steps)[valid], bins[valid]] += self.signal_strength
+            self.truth = {'start_freq_bin': int(start), 'drift_rate_bins_per_step': float(drift),
+                          'drift_rate_hz_per_s': self.drift_rate_hz_per_s,
+                          'signal_strength': self.signal_strength, 'in_band_steps': int(valid.sum())}
         return freqs, times, power
 
 
 class RTLSDRSource:
-    """Captures live signal from an RTL-SDR dongle.
+    """Unaveraged FFT frames from consecutive SDR samples (not 1 s frames).
 
-    Needs: pip install pyrtlsdr, plus the librtlsdr system driver
-    (installed via your OS -- see README setup steps) and the dongle
-    plugged in.
-
-    center_freq_hz: which frequency to listen on. Common space targets:
-        137.1e6   NOAA-19 weather satellite (APT)
-        137.62e6  NOAA-15
-        137.9125e6 NOAA-18
-        145.8e6   ISS voice/SSTV downlink (varies by activity)
-    Note: this dongle's FC0013 tuner covers 22-1100 MHz, so the 1420 MHz
-    hydrogen line is out of range -- these satellite targets are the
-    right fit for it.
+    Time coordinates use sample count / sample rate and assume no dropped
+    samples; USB timing/dropouts and RF calibration require hardware validation.
     """
-
     def __init__(self, center_freq_hz=137.1e6, sample_rate_hz=2.048e6,
-                 n_time_steps=256, fft_size=2048, gain="auto"):
+                 n_time_steps=256, fft_size=2048, gain='auto'):
         from rtlsdr import RtlSdr
+        if fft_size < 2 or n_time_steps < 2 or sample_rate_hz <= 0:
+            raise ValueError('Invalid SDR capture dimensions or sample rate.')
         self.sdr = RtlSdr()
-        self.sdr.sample_rate = sample_rate_hz
-        self.sdr.center_freq = center_freq_hz
-        self.sdr.gain = gain
-        self.n_time_steps = n_time_steps
-        self.fft_size = fft_size
+        try:
+            self.sdr.sample_rate = sample_rate_hz
+            self.sdr.center_freq = center_freq_hz
+            self.sdr.gain = gain
+        except Exception:
+            self.sdr.close()
+            raise
+        self.n_time_steps, self.fft_size = n_time_steps, fft_size
 
     def capture(self):
-        power_rows = []
+        power = []
         for _ in range(self.n_time_steps):
             samples = self.sdr.read_samples(self.fft_size)
+            if len(samples) != self.fft_size:
+                raise ValueError('Short SDR frame; cannot assign a reliable sample time axis.')
             spectrum = np.fft.fftshift(np.fft.fft(samples))
-            power_rows.append(np.abs(spectrum) ** 2)
-        power = np.array(power_rows)
-
-        freq_offsets = np.fft.fftshift(np.fft.fftfreq(self.fft_size, d=1 / self.sdr.sample_rate))
-        freqs_mhz = (self.sdr.center_freq + freq_offsets) / 1e6
-        times = np.arange(self.n_time_steps)
-        return freqs_mhz, times, power
+            power.append(np.abs(spectrum) ** 2)
+        offsets = np.fft.fftshift(np.fft.fftfreq(self.fft_size, d=1 / self.sdr.sample_rate))
+        freqs = (self.sdr.center_freq + offsets) / 1e6
+        times = (np.arange(self.n_time_steps) + 0.5) * self.fft_size / self.sdr.sample_rate
+        return freqs, times, np.asarray(power)
 
     def close(self):
         self.sdr.close()
 
 
 class FileSource:
-    """TODO for real archived telescope data (e.g. Breakthrough Listen).
+    """Load a bounded .fil/.h5 sub-band with blimpy (optional dependency).
 
-    pip install blimpy
-    from blimpy import Waterfall
-    obs = Waterfall(path_to_fil_or_h5_file)
-    freqs = obs.get_freqs()
-    power = obs.data  # shape roughly matches what we use here
+    Time spacing and channel centers come from the file header. Descending
+    frequency axes are reversed together with the data. Only single-IF data
+    are supported; polarization averaging is never silently assumed.
     """
+    def __init__(self, filepath, f_start=None, f_stop=None, max_time_steps=256):
+        self.filepath = Path(filepath)
+        if not self.filepath.is_file():
+            raise FileNotFoundError(self.filepath)
+        if max_time_steps < 2:
+            raise ValueError('max_time_steps must be at least two.')
+        self.f_start, self.f_stop = f_start, f_stop
+        self.max_time_steps = max_time_steps
 
-    def __init__(self, filepath):
-        raise NotImplementedError(
-            "Implement with blimpy.Waterfall once you have a real data file -- "
-            "see class docstring."
-        )
+    def capture(self):
+        from blimpy import Waterfall
+        obs = Waterfall(str(self.filepath), f_start=self.f_start, f_stop=self.f_stop,
+                        t_start=0, t_stop=self.max_time_steps, max_load=0.25)
+        power = np.asarray(obs.data, dtype=float)
+        if power.ndim != 3 or power.shape[1] != 1:
+            raise ValueError('Expected a loaded time x 1 IF x frequency sub-band. Select a smaller band if not loaded.')
+        power = power[:, 0, :]
+        freqs = np.asarray(obs.container.populate_freqs(), dtype=float)
+        dt = float(obs.header['tsamp'])
+        if not np.isfinite(dt) or dt <= 0:
+            raise ValueError('Invalid integration time in telescope header.')
+        times = np.arange(power.shape[0]) * dt
+        if freqs[0] > freqs[-1]:
+            freqs, power = freqs[::-1], power[:, ::-1]
+        if power.shape != (len(times), len(freqs)) or min(power.shape) < 2:
+            raise ValueError('File data and axes do not agree, or selection is too small.')
+        return freqs, times, power

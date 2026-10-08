@@ -13,7 +13,7 @@ pip install -r requirements.txt
 - Put research papers / tutorials in `src/data/docs/` - PDF, Word
   (`.docx`), Markdown, or plain text. e.g. Breakthrough Listen docs,
   turbo_seti / blimpy references, any SETI papers you're citing.
-- Put this project's own outputs in `src/data/logs/` - `.txt`/`.json`/`.md`
+- The local CLI now saves structured run JSON automatically in `src/data/logs/`. Rebuild the index after new runs. You can also put this project's own outputs in `src/data/logs/` - `.txt`/`.json`/`.md`
   notes, **or drop a `waterfall.png` / spectrogram image in directly**.
   Images are captioned by Claude vision at ingest time (see step 3 first -
   it needs the API key), so a plot becomes a normal searchable chunk
@@ -91,3 +91,9 @@ Web sources it uses show up in the returned `sources` list prefixed `web:`.
   the ingest step as part of your build - Vercel's serverless filesystem
   is read-only at request time, so `python -m rag.ingest` can't run
   on-demand there the way it can locally.
+
+## Validation scope
+The signal benchmarks and Voyager reproduction do not validate RAG answers.
+No live LLM or image-caption calls were made during those experiments.
+Use numerical JSON records as the source for measured values; image captions
+are interpretations and may be inaccurate.

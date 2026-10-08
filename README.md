@@ -1,126 +1,136 @@
-# Space Signal Receiver
+# Space Signal Receiver with RAG
 
-A signal-detection pipeline built the same way real SETI/radio-astronomy
-software works: **capture → detect → visualize**. Right now it runs on
-simulated data so you can build and test the whole pipeline before your
-RTL-SDR dongle arrives. Once it does, one line changes.
+A Python prototype for **capture -> linear-drift search -> waterfall -> run log**,
+with an optional research assistant over your documents and saved results.
+The pipeline supports synthetic spectrograms, an RTL-SDR adapter, and bounded
+Breakthrough Listen `.fil`/`.h5` selections through `blimpy`.
 
-## Run it now (webpage version)
+**Validation status:** tested on 300 synthetic signal observations, 100 noise-only
+observations, and Berkeley's known Voyager 1 Green Bank Telescope example.
+This reproduces a known spacecraft signal; it is not a discovery, a blind SETI
+survey, or proof that an arbitrary candidate is astronomical. Hardware capture
+has been unit-tested using a fake device, not validated with a physical dongle.
+
+## Run a local simulation
+
+Use Python 3.12 for the exact validated environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
+pip install -r requirements-core.txt
+python src/app.py --seed 42
+python src/app.py --seed 42 --no-signal --out outputs/noise.png
+```
+
+The CLI saves a waterfall PNG and a timestamped JSON record in `src/data/logs/`.
+It reports start frequency in MHz, drift in Hz/s, and an **excess-power score**.
+The JSON field `snr` retains its original name for compatibility; it is not a
+calibrated signal-to-noise measurement or false-alarm probability.
+
+The defaults use 1 Hz frequency channels and 1 s time steps, with a 0.4 Hz/s
+injection that visibly moves across channels. Set `--strength` and `--drift-hz-s`
+to explore sensitivity. Simulations are independent exponential power noise plus
+an additive nearest-bin track, without spectral leakage or an RF transfer model.
+
+## Web interface
+
+```bash
+python src/app_web.py
+```
+
+Open http://localhost:5000. Use the seed and injection checkbox to run the
+simulation. This view keeps plots in memory; CLI run logs are the persistent
+input to the optional research assistant. Hosted deployments need their own
+persistent log storage; the browser is not receiving signals from a local dongle.
+
+## Reproduce the experiments
+
+```bash
+pip install -r requirements-validation-lock.txt
+python -m pytest -q
+python scripts/benchmark.py --seeds 25 --noise-seeds 100
+python scripts/validate_voyager.py --download
+```
+
+The lock file records the environment used for the committed results (Python
+3.12). `requirements-research.txt` offers broader version ranges, but exact
+reproduction should use the lock file. The optional RAG stack is separate and
+was not part of these experiments.
+
+`--download` retrieves the approximately 48 MiB public Berkeley file and verifies
+its SHA256. The tutorial's HTTP download worked in the validation environment;
+HTTPS returned HTTP 502. Hash verification checks against the exact bytes used
+here; it is not a substitute for publisher-provided authenticity metadata.
+If the upstream server is unavailable, obtain the unchanged file separately and
+pass `--file` to the validation script. Telescope data are not committed to Git.
+
+Read **[the validation report](reports/VALIDATION.md)** for all results,
+confidence intervals, provenance, limitations, and remaining work.
+
+## Analyze a telescope sub-band
+
+```bash
+python src/app.py --source file \
+  --file data/Voyager1.single_coarse.fine_res.h5 \
+  --f-start 8419.296 --f-stop 8419.298 --max-time-steps 16 \
+  --max-drift-bins 4 --out outputs/voyager.png
+```
+
+Frequency bounds are in MHz. Search range is in **bins per integration**;
+conversion to Hz/s uses the actual channel spacing and integration interval.
+The default grid spaces track endpoints at most one channel apart. Select a
+small sub-band: this is a prototype brute-force algorithm, not a scalable survey
+search. Only single-IF data are supported; the adapter does not silently average
+polarizations. The current detector does not incorporate file masks, calibrated
+bandpass removal, barycentric corrections, or RFI rejection.
+
+## Hardware adapter (not field-validated)
+
+Install your device's system drivers and `pyrtlsdr`, then choose a frequency your
+hardware supports and a transmitter known to be active:
+
+```bash
+python src/app.py --source rtlsdr --freq-mhz 137.1
+```
+
+The frequency above is only an example, not a claim that a satellite is active
+there. Each 2048-sample FFT at 2.048 MS/s represents **1 ms** of samples.
+The 256-frame default capture is about 0.256 s and is generally too short/coarse
+for slow astronomical drift measurements. Longer captures, channelization,
+windowing, averaging, gain/bandpass calibration, and dropped-sample detection
+need development and real hardware evaluation. A USB dongle attached to your
+computer is accessed by a local process, not by a cloud-hosted web application.
+
+## Optional research assistant
+
+See [RAG_SETUP.md](RAG_SETUP.md). Add reference documents to `src/data/docs/`;
+CLI captures create JSON logs in `src/data/logs/`. Rebuild the index after runs:
 
 ```bash
 pip install -r requirements.txt
 cd src
-python app_web.py
+python -m rag.ingest
 ```
 
-Then open your browser to **http://localhost:5000** — you'll get a page
-with a button to run a capture and see the waterfall plot right there,
-no terminal reading required.
+Image captioning and chat require an Anthropic API key. No live LLM/RAG calls were
+made as part of the signal-validation report. Image captions are interpretations,
+not substitutes for the numerical run records.
 
-## Run it now (terminal/CLI version)
+## Layout
 
-```bash
-pip install -r requirements.txt
-cd src
-python3 app.py --seed 42
-```
+- `src/source.py`: synthetic, sample-clock SDR, and telescope-file sources.
+- `src/detector.py`: mean-centered drift search and conversion to physical units.
+- `src/visualizer.py`: frequency-offset waterfall plots.
+- `src/app.py`, `src/app_web.py`: CLI and simulation web interface.
+- `scripts/`: reproducible experiments and data retrieval.
+- `tests/`: algorithm, units, file-reader, CLI, and web checks.
+- `reports/`: committed measurements, plots, provenance, and limitations.
 
-This will:
-1. Generate a synthetic spectrogram (noise + one injected signal that
-   drifts in frequency, like a real transmitter would from Doppler shift)
-2. Run a de-doppler drift search to find it — the same core technique
-   `turbo_seti` uses on real Breakthrough Listen telescope data
-3. Save `outputs/waterfall.png` — a spectrogram with the detected
-   signal's drift line marked in red
+## Attribution
 
-Try `--seed` with different numbers, or edit `SimulatedSource` in
-`src/source.py` to change signal strength, drift rate, or turn the
-injected signal off entirely (to confirm the detector stays quiet on
-pure noise).
-
-## Project structure
-
-```
-space-signal-receiver/
-├── src/
-│   ├── source.py       # where data comes from (simulated now, real hardware/files later)
-│   ├── detector.py      # threshold + de-doppler drift search
-│   ├── visualizer.py    # waterfall (spectrogram) plotting
-│   └── app.py            # ties it all together
-├── data/                  # put real downloaded telescope files here later
-├── outputs/               # generated plots land here
-└── requirements.txt
-```
-
-## Research assistant (optional)
-
-A RAG-powered chat widget lives at the bottom-right of the web pages -
-it answers questions grounded in your own indexed papers and run logs
-(and can compare the two). See [RAG_SETUP.md](RAG_SETUP.md) to set it up.
-
-## When the RTL-SDR dongle arrives — full setup
-
-### 1. Driver install
-- **Windows:** Plug the dongle in, then use [Zadig](https://zadig.akeo.ie/) to
-  install the **WinUSB** driver for it (RTL-SDR dongles show up as a DVB-T TV
-  tuner by default — Zadig replaces that driver so SDR software can use it).
-- **Linux:** `sudo apt-get install rtl-sdr librtlsdr-dev` then unplug/replug
-  the dongle. Run `rtl_test` — it should detect the device and print tuner
-  info (`Found 1 device`, `Detached kernel driver`, etc.).
-- **Mac:** `brew install librtlsdr`
-
-### 2. Sanity-check it with a GUI tool first
-Before touching any code, confirm the hardware itself works:
-- **GQRX** (Linux/Mac) or **SDR#** (Windows) — free SDR receiver apps.
-- Tune to a local FM station (e.g. 100-105 MHz) and confirm you hear audio.
-  If that works, the dongle, driver, and antenna chain are all good.
-
-### 3. Get a pass-prediction tool
-Satellites are only overhead for ~10-15 minutes per pass. Use
-**[Gpredict](http://gpredict.oz9aec.net/)** (free, cross-platform) or
-`n2yo.com` in a browser — enter your location (Lahore) and it tells you
-exactly when NOAA-19, NOAA-15, NOAA-18, or the ISS next pass overhead,
-and how high above the horizon (higher = stronger signal).
-
-### 4. Antenna note
-The small antenna these dongles ship with is fine for FM/local testing but
-weak for satellites. A simple wire **V-dipole cut for ~137 MHz** (roughly
-two ~52 cm wire legs) is a common cheap DIY upgrade and dramatically
-improves NOAA satellite reception. Not required to get started, but worth
-it once you've confirmed the basic chain works.
-
-### 5. Capture a real pass with our pipeline
-Once Gpredict shows a pass starting:
-
-```bash
-python3 app.py --source rtlsdr --freq-mhz 137.1
-```
-(swap 137.1 for whichever satellite is passing — see the frequency list
-in `source.py`'s `RTLSDRSource` docstring)
-
-This runs the exact same capture → de-doppler search → waterfall pipeline
-you already tested on simulated data — except now `power` comes from real
-IQ samples pulled live off the dongle via `pyrtlsdr`. A real satellite
-pass has genuine Doppler drift as it moves overhead, so this is a
-legitimate test of the same drift-search code, on a real signal.
-
-`pip install pyrtlsdr` is needed for this (already in `requirements.txt`,
-commented out — uncomment it once the dongle's here).
-
-## Working with real telescope data (no hardware needed)
-
-Berkeley's Breakthrough Listen project publishes real raw/reduced SETI
-telescope data for free, including a tutorial on detecting the Voyager 1
-spacecraft's actual signal in real Green Bank Telescope data:
-`github.com/UCBerkeleySETI/breakthrough`
-
-To use it: `pip install blimpy`, download a sample `.fil`/`.h5` file, and
-implement `FileSource` in `src/source.py` using `blimpy.Waterfall` — same
-`(freqs, times, power)` contract again.
-
-## Extending it (ties into AstroML)
-
-The natural next step, given the exoplanet-detection ML work already
-done in AstroML: train a classifier to distinguish real candidate
-signals from RFI (radio-frequency interference) in the spectrograms —
-an active problem in real SETI pipelines.
+The real-data example follows the [UC Berkeley SETI blimpy Voyager tutorial](https://github.com/UCBerkeleySETI/blimpy/blob/master/examples/voyager.ipynb).
+The detector here is a small nearest-bin brute-force implementation, not an
+implementation or performance equivalent of `turboSETI`. This validation update
+was developed with AI assistance; reviewing the code and reproducing the results
+is necessary before representing it as independently performed research.

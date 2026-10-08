@@ -13,7 +13,7 @@ import base64
 from flask import Flask, render_template_string, request
 
 from source import SimulatedSource
-from detector import threshold_hits, dedoppler_search
+from detector import threshold_hits, dedoppler_search, physical_candidates
 from visualizer import plot_waterfall_bytes
 
 app = Flask(__name__)
@@ -97,7 +97,7 @@ SIGNAL_PAGE = """
     </label>
     <label>
       <input type="checkbox" name="inject_signal" {% if inject_signal %}checked{% endif %}>
-      Inject a signal (uncheck to test pure noise — should find 0 candidates)
+      Inject a signal (uncheck for a noise-only test; false positives are possible)
     </label>
     <button type="submit">Capture &amp; Detect</button>
   </form>
@@ -108,7 +108,7 @@ SIGNAL_PAGE = """
        ({{ freq_min }}–{{ freq_max }} MHz)</p>
     <h3>{{ n_candidates }} candidate signal(s) found</h3>
     {% for c in candidates %}
-    <div class="candidate">~{{ c.freq_mhz }} MHz &nbsp;|&nbsp; drift {{ c.drift }} bins/step &nbsp;|&nbsp; SNR {{ c.snr }}</div>
+    <div class="candidate">~{{ c.freq_mhz }} MHz &nbsp;|&nbsp; drift {{ c.drift }} Hz/s &nbsp;|&nbsp; excess-power score {{ c.snr }}</div>
     {% endfor %}
     <img src="data:image/png;base64,{{ image_b64 }}" alt="waterfall plot">
   </div>
@@ -123,15 +123,15 @@ def run_pipeline(seed, inject_signal):
     source = SimulatedSource(seed=seed, inject_signal=inject_signal)
     freqs, times, power = source.capture()
     threshold_hits(power)  # kept for parity with the CLI pipeline; not shown in the UI
-    raw_candidates = dedoppler_search(power, n_sigma=20.0)
+    raw_candidates = dedoppler_search(power, n_sigma=6.0)
 
     candidates = []
-    for c in raw_candidates:
-        freq_mhz = freqs.min() + c["start_freq_bin"] * (freqs.max() - freqs.min()) / len(freqs)
+    for c in physical_candidates(raw_candidates, freqs, times):
+        freq_mhz = c["frequency_mhz"]
         candidates.append({
-            "freq_mhz": round(float(freq_mhz), 4),
-            "drift": c["drift_rate_bins_per_step"],
-            "snr": c["snr"],
+            "freq_mhz": round(float(freq_mhz), 9),
+            "drift": round(c["drift_rate_hz_per_s"], 4),
+            "snr": round(c["snr"], 2),
         })
 
     png_bytes = plot_waterfall_bytes(freqs, times, power, candidates=raw_candidates)
@@ -153,7 +153,12 @@ def signal():
             widget_script=WIDGET_SCRIPT_TAG,
         )
 
-    seed = int(request.form.get("seed", 42))
+    try:
+        seed = int(request.form.get("seed", 42))
+        if not 0 <= seed <= 2**32 - 1:
+            raise ValueError
+    except (ValueError, TypeError):
+        return "Seed must be an integer between 0 and 4294967295.", 400
     inject_signal = request.form.get("inject_signal") == "on"
 
     freqs, power, candidates, image_b64 = run_pipeline(seed, inject_signal)
@@ -161,7 +166,7 @@ def signal():
     return render_template_string(
         SIGNAL_PAGE, ran=True, seed=seed, inject_signal=inject_signal,
         n_time=power.shape[0], n_freq=power.shape[1],
-        freq_min=round(float(freqs.min()), 2), freq_max=round(float(freqs.max()), 2),
+        freq_min=round(float(freqs.min()), 9), freq_max=round(float(freqs.max()), 9),
         n_candidates=len(candidates), candidates=candidates,
         image_b64=image_b64,
         widget_script=WIDGET_SCRIPT_TAG,
